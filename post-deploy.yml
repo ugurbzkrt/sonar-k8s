@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-deployment
+  namespace: sast
+spec:
+  selector:
+    matchLabels:
+      app: sonarqube-postgres
+      tier: db
+  replicas: 1 
+  template:
+    metadata:
+      name: sonarqube-postgres
+      labels:
+        app: sonarqube-postgres
+        tier: db
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:13.1
+        env:
+        - name: PGDATA
+          value: "/var/lib/postgresql/data/pgdata"
+        - name: POSTGRES_SONAR_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_SONAR_PASSWORD
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_PASSWORD
+        volumeMounts:
+        - mountPath: "/var/lib/postgresql/data/"
+          name: dbdata
+        - mountPath: /docker-entrypoint-initdb.d
+          name: initdb
+          readOnly: true
+      volumes:
+      - name: dbdata
+        persistentVolumeClaim:
+          claimName: postgres-data
+      - name: initdb
+        configMap:
+          name: postgres-init
+          defaultMode: 0777

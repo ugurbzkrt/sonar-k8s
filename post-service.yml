@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  namespace: sast
+  labels:
+    run: sonarqube-postgres
+    tier: db
+spec:
+  selector:
+    app: sonarqube-postgres
+    tier: db
+  ports:
+  - port: 5432
+    protocol: TCP
+  type: ClusterIP

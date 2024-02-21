@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init
+  namespace: sast
+data:
+  sonar_db_init.sh: |
+    #!/bin/bash
+    psql --username postgres << EOF
+      CREATE USER sonarqube WITH PASSWORD 'sonar';
+      CREATE DATABASE sonarqube;
+      GRANT ALL PRIVILEGES ON DATABASE sonarqube TO sonarqube;
+    EOF
+

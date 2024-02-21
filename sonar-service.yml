@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: sonarqube-service
+  namespace: sast
+  labels:
+    app: sonarqube
+    tier: web
+spec:
+  selector:
+    app: sonarqube
+    tier: web
+  type: LoadBalancer
+  ports:
+  - port: 9000
+    protocol: TCP
+    targetPort: 9000

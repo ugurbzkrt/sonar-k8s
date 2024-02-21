@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sonarqube-extensions
+  namespace: sast
+spec:
+  accessModes:
+  - ReadWriteMany
+  storageClassName: sast-azurefile
+  resources:
+    requests:
+      storage: 35Gi

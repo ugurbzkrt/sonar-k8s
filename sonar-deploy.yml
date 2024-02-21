@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: sonarqube-deployment
+    namespace: sast
+spec:
+  selector:
+    matchLabels:
+      app: sonarqube
+      tier: web
+  replicas: 1
+  template:
+    metadata:
+      name: sonarqube-deployment
+      labels:
+        app: sonarqube
+        tier: web
+    spec:
+      containers:
+        - name: sonarqube
+          image: sonarqube:7.9.4-community
+          volumeMounts:
+          - mountPath: "/opt/sonarqube/data/"
+            name: sonarqube-data
+          - mountPath: "/opt/sonarqube/extensions/"
+            name: sonarqube-extensions
+          env:
+          - name: SONARQUBE_JDBC_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: sonarqube-secret
+                key: SONARQUBE_JDBC_USERNAME
+          - name: SONARQUBE_JDBC_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: sonarqube-secret
+                key: SONARQUBE_JDBC_PASSWORD
+          - name: "SONARQUBE_JDBC_URL"
+            value: "jdbc:postgresql://postgres-service:5432/sonarqube"
+          ports:
+          - containerPort: 9000
+            protocol: TCP
+          securityContext:
+            privileged: true
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1024Mi
+            limits:
+              cpu: 2000m
+              memory: 2048Mi
+      initContainers:
+      - name: sonarqube-init-elastic
+        image: busybox
+        command: ['sh', '-c', 'sysctl -w vm.max_map_count=262144']
+        securityContext:
+          privileged: true
+      - name: permission-init-ext
+        image: busybox
+        command:
+        - sh
+        - -c
+        - chown -R 999:999 /opt/sonarqube/extensions
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: sonarqube-extensions
+          mountPath: /opt/sonarqube/extensions
+      - name: permission-init-data
+        image: busybox
+        command:
+        - sh
+        - -c
+        - chown -R 999:999 /opt/sonarqube/data
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: sonarqube-data
+          mountPath: /opt/sonarqube/data
+      volumes:
+      - name: sonarqube-data
+        persistentVolumeClaim:
+          claimName: sonarqube-data
+      - name: sonarqube-extensions
+        persistentVolumeClaim:
+          claimName: sonarqube-extensions
